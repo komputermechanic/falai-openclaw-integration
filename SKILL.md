@@ -1,6 +1,6 @@
 ---
 name: fal-image-generation-setup
-description: Set up FAL image generation for OpenClaw using a simple terminal-based flow that stores FAL_KEY in the shell profile and sets imageGenerationModel to fal/fal-ai/flux/dev in /root/.openclaw/openclaw.json.
+description: Set up FAL image generation for OpenClaw using a simple terminal-based flow that stores FAL_KEY in the shell profile, sets imageGenerationModel to fal/fal-ai/flux/dev in /root/.openclaw/openclaw.json, and restarts OpenClaw Gateway.
 ---
 
 # FAL Image Generation Setup
@@ -12,9 +12,10 @@ Use this package when the user wants a simple setup flow for FAL image generatio
 
 ## Setup steps
 
-1. Add `FAL_KEY` to `~/.bashrc`.
+1. Replace the FAL key placeholder with the real key and add it to `~/.bashrc`.
 2. Update `/root/.openclaw/openclaw.json` to set:
    - `agents.defaults.imageGenerationModel = "fal/fal-ai/flux/dev"`
+3. Run `openclaw gateway restart`.
 
 ## Notes
 

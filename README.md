@@ -3,11 +3,11 @@
 Created by **Komputer Mechanic**  
 Website: <https://komputermechanic.com/>
 
-This setup uses a very simple approach.
+This setup uses a simple direct approach.
 
 ## Step 1: add your FAL key
 
-Run this in your terminal:
+Replace `your_actual_fal_key_here` with your real FAL API key, then run:
 
 ```bash
 echo "export FAL_KEY=your_actual_fal_key_here" >> ~/.bashrc && source ~/.bashrc
@@ -15,7 +15,7 @@ echo "export FAL_KEY=your_actual_fal_key_here" >> ~/.bashrc && source ~/.bashrc
 
 ## Step 2: set OpenClaw to use FAL for image generation
 
-Run this in your terminal:
+Run:
 
 ```bash
 node -e "
@@ -27,14 +27,19 @@ console.log('Done');
 "
 ```
 
+## Step 3: restart OpenClaw Gateway
+
+Run:
+
+```bash
+openclaw gateway restart
+```
+
 ## What this does
 
 - stores `FAL_KEY` in your shell profile
 - updates OpenClaw config to use `fal/fal-ai/flux/dev`
-
-## Important note
-
-This simple method is intended for environments where this setup pattern works for the running OpenClaw instance.
+- restarts OpenClaw Gateway so the change can take effect
 
 ## Test
 
