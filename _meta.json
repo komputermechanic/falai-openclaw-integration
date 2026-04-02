@@ -2,5 +2,5 @@
   "author": "Komputer Mechanic",
   "website": "https://komputermechanic.com/",
   "title": "OpenClaw Image Generation Setup",
-  "summary": "A single-script setup for OpenClaw image generation with OpenAI, fal.ai, or both."
+  "summary": "A single interactive installer for OpenClaw image generation with OpenAI, fal.ai, model switching, uninstall support, and a custom fal_image skill."
 }

@@ -3,27 +3,49 @@
 Created by **Komputer Mechanic**  
 Website: <https://komputermechanic.com/>
 
-This repo is intentionally simple.
-
-It uses a single script to set up image generation for OpenClaw with:
-- OpenAI only
-- fal.ai only
-- or both with primary + fallback
-
-## Main script
+This repo is built around a single installer script:
 
 - `install-image-generation.sh`
 
+The script is interactive and currently supports three main flows:
+- **Fresh setup** — configure image generation from scratch
+- **Switch model** — change the currently selected fal.ai model
+- **Uninstall** — remove image generation settings and optionally remove API keys
+
+## What the script can configure
+
+### Providers
+- **OpenAI** using `gpt-image-1`
+- **fal.ai** using a selectable fal model
+- **Both** with a primary + fallback setup
+
+### fal.ai model options
+The script currently offers these fal.ai models:
+
+**Generate only:**
+- FLUX.1 Dev (`fal-ai/flux/dev`)
+- FLUX.1 Schnell (`fal-ai/flux/schnell`)
+- FLUX.1.1 Pro (`fal-ai/flux-pro/v1.1`)
+- FLUX.2 Flex (`fal-ai/flux-2-flex`)
+
+**Generate + Edit:**
+- FLUX.2 Pro (`fal-ai/flux-2-pro`)
+- Nano Banana 2 (`fal-ai/nano-banana-2`)
+- Nano Banana Pro (`fal-ai/nano-banana-pro`)
+
 ## What the script does
 
-The script:
-- checks that OpenClaw is installed
-- ensures `~/.openclaw/.env` exists
-- asks which provider(s) you want to set up
-- stores your API key(s) in `~/.openclaw/.env`
-- updates `~/.openclaw/openclaw.json`
-- creates the `flux2pro` skill when fal.ai is selected
-- restarts OpenClaw Gateway
+Depending on the path you choose, the script can:
+- check that OpenClaw is installed
+- ensure `~/.openclaw/.env` exists
+- collect and store `OPENAI_API_KEY`
+- collect and store `FAL_KEY`
+- update `~/.openclaw/openclaw.json`
+- create or update the `fal_image` skill at:
+  - `~/.openclaw/skills/fal-image/SKILL.md`
+- restart OpenClaw Gateway
+- remove image generation config during uninstall
+- optionally remove API keys during uninstall
 
 ## Run it
 
@@ -42,10 +64,35 @@ curl -fsSL https://raw.githubusercontent.com/komputermechanic/openclaw-image-gen
 
 ## What users should expect
 
-During setup, the script will:
-- ask which provider(s) to configure
-- ask for the relevant API key(s)
-- ask which provider should be primary if both are selected
+At the beginning, the script shows a disclaimer and asks whether to continue.
+
+Then it lets the user choose one of these actions:
+- fresh setup
+- switch model
+- uninstall
+
+### Fresh setup
+The script can:
+- configure OpenAI only
+- configure fal.ai only
+- configure both with primary + fallback
+
+If fal.ai is selected, it also asks which fal model to use.
+
+### Switch model
+The script:
+- reads the current image generation model
+- lets the user choose a new fal model
+- updates `openclaw.json`
+- rebuilds the `fal_image` skill
+- restarts OpenClaw Gateway
+
+### Uninstall
+The script can:
+- remove `imageGenerationModel` from `openclaw.json`
+- delete the `fal-image` skill folder
+- optionally remove `FAL_KEY`
+- optionally remove `OPENAI_API_KEY`
 - restart OpenClaw Gateway
 
 ## OpenClaw agent prompt example
@@ -60,5 +107,6 @@ Guide me step by step. If needed, tell me to run the install script from the rep
 
 ## Notes
 
-- If you select fal.ai, the script also creates the `flux2pro` skill intentionally.
-- This repo is built around the single setup script as the primary setup method.
+- The repo is intentionally centered on the single installer script.
+- If fal.ai is configured, the script intentionally creates a custom `fal_image` skill.
+- Some fal.ai models in the script support **generation only**, while others support **generation and editing**.
