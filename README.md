@@ -30,14 +30,14 @@ The script:
 ### Cautious path
 
 ```bash
-wget -O install-image-generation.sh https://raw.githubusercontent.com/komputermechanic/falai-openclaw-integration/main/install-image-generation.sh
+wget -O install-image-generation.sh https://raw.githubusercontent.com/komputermechanic/openclaw-image-generation/main/install-image-generation.sh
 bash install-image-generation.sh
 ```
 
 ### Fast path
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/komputermechanic/falai-openclaw-integration/main/install-image-generation.sh | bash
+curl -fsSL https://raw.githubusercontent.com/komputermechanic/openclaw-image-generation/main/install-image-generation.sh | bash
 ```
 
 ## What users should expect
@@ -53,7 +53,7 @@ During setup, the script will:
 ```text
 Help me set up image generation for OpenClaw using this GitHub repo:
 
-https://github.com/komputermechanic/falai-openclaw-integration
+https://github.com/komputermechanic/openclaw-image-generation
 
 Guide me step by step. If needed, tell me to run the install script from the repo.
 ```
