@@ -1,30 +1,14 @@
 # FAL Image Generation Setup for OpenClaw
 
-This repo is designed for **agent-assisted setup**.
+This package is for **agent-assisted setup**.
 
-The idea is simple:
-- the OpenClaw agent discovers where your active OpenClaw config and environment files live
-- the agent applies the minimum required config changes safely
-- you enter your `FAL_KEY` locally in the terminal only
-- your secret never needs to be pasted into chat
+The goal is to enable OpenClaw image generation with FAL while keeping the API key out of chat.
 
-## Recommended user prompt
+## What must be true for this to work
 
-```text
-Help me set up FAL image generation for OpenClaw on this machine using this GitHub repo.
+Two things are required:
 
-First discover where the active OpenClaw config and environment files are stored.
-Do not ask me to paste my FAL API key into chat.
-Instead, tell me the exact local terminal command to run so I can store the key securely outside chat.
-Back up any config before changing it, apply the minimum necessary changes, and then verify the setup.
-```
-
-## What the agent should do
-
-1. Discover the active OpenClaw config file
-2. Discover where environment variables for OpenClaw are loaded from
-3. Back up files before editing
-4. Add or update:
+1. OpenClaw config must include:
 
 ```json5
 {
@@ -36,25 +20,39 @@ Back up any config before changing it, apply the minimum necessary changes, and 
 }
 ```
 
-5. Tell the user the exact command to run for local credential setup
-6. Restart OpenClaw if needed
-7. Verify by testing image generation availability
+2. The **running OpenClaw process** must have `FAL_KEY` in its environment.
+
+That second part is critical.
+It is not enough to write the key to an arbitrary file unless the running OpenClaw process actually loads that file.
+
+## Recommended user prompt
+
+```text
+Help me set up FAL image generation for OpenClaw on this machine using this GitHub repo.
+
+First discover where the active OpenClaw config file is stored and how the running OpenClaw process gets environment variables.
+Do not ask me to paste my FAL API key into chat.
+Instead, tell me the exact local terminal command I should run so I can store the key securely outside chat.
+Back up any config before changing it, apply the minimum necessary changes, make sure the running OpenClaw process actually receives FAL_KEY, and then verify the setup.
+```
 
 ## Local credential step
 
-The agent should pass an explicit env-file path to the credential script.
+The agent should pass an explicit destination file path to the credential script.
 
 Example:
 
 ```bash
-FAL_ENV_FILE=/path/to/your/openclaw.env bash configure-fal-credentials.sh
+FAL_ENV_FILE=/path/to/runtime/env-file bash scripts/configure-fal-credentials.sh
 ```
 
-## Why this repo is agent-assisted
+## Important note
 
-A static script cannot safely guess where every OpenClaw deployment stores:
-- its active config file
-- its environment file
-- its service-level variables
+This package does **not** assume one universal env file path.
+The agent must first discover how this specific OpenClaw deployment is run.
 
-So discovery should be done by the agent, while secret entry should be done locally in the terminal.
+Examples could include:
+- shell-based startup
+- service-managed startup
+- systemd environment files
+- other deployment-specific env loading
