@@ -18,6 +18,19 @@ echo -e "${CYAN} OpenClaw Image Generation Setup${NC}"
 echo -e "${CYAN} By Komputer Mechanic${NC}"
 echo -e "${CYAN}============================================${NC}"
 echo ""
+echo ""
+echo -e "${YELLOW}Disclaimer:${NC}"
+echo "Use this setup script at your own risk."
+echo "Komputer Mechanic is not liable for mistakes, misconfiguration, downtime, or any errors caused by using this script."
+echo ""
+read -p "Do you want to proceed? (y/n): " PROCEED_SETUP
+echo ""
+if [ "$PROCEED_SETUP" != "y" ]; then
+ echo -e "${YELLOW}Setup cancelled.${NC}"
+ exit 0
+fi
+
+echo ""
 
 # ── Check openclaw.json exists ───────────────────────────────────────────────
 CONFIG="$HOME/.openclaw/openclaw.json"
