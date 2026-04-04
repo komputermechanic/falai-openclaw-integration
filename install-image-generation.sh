@@ -306,7 +306,7 @@ if [ "$ACTION_CHOICE" = "3" ]; then
     echo "This key is used by ALL fal.ai models (FLUX, Nano Banana, etc.)"
     echo "Get your key at: https://fal.ai/dashboard/keys"
     echo ""
-    read -r -s -p "Paste your fal.ai API key: " NEW_FAL_KEY; echo
+    read -r -p "Paste your fal.ai API key: " NEW_FAL_KEY; echo
     echo ""
     if [ -z "$NEW_FAL_KEY" ]; then
       echo -e "${RED}❌ No fal.ai key entered. Exiting.${NC}"
@@ -323,7 +323,7 @@ if [ "$ACTION_CHOICE" = "3" ]; then
     echo "This key is used ONLY by the OpenAI provider (gpt-image-1)."
     echo "Get your key at: https://platform.openai.com/api-keys"
     echo ""
-    read -r -s -p "Paste your OpenAI API key: " NEW_OPENAI_KEY; echo
+    read -r -p "Paste your OpenAI API key: " NEW_OPENAI_KEY; echo
     echo ""
     if [ -z "$NEW_OPENAI_KEY" ]; then
       echo -e "${RED}❌ No OpenAI key entered. Exiting.${NC}"
@@ -475,7 +475,7 @@ if [ "$SETUP_OPENAI" = true ]; then
   fi
 
   if [ "$SETUP_OPENAI" = true ]; then
-    read -r -s -p "Paste your OpenAI API key: " OPENAI_KEY; echo
+    read -r -p "Paste your OpenAI API key: " OPENAI_KEY; echo
     echo ""
     if [ -z "$OPENAI_KEY" ]; then
       echo -e "${RED}❌ No OpenAI key entered. Exiting.${NC}"
@@ -500,7 +500,7 @@ if [ "$SETUP_FAL" = true ]; then
     read -p "Do you want to replace it? (y/n): " REPLACE_FAL
     echo ""
     if [ "$REPLACE_FAL" = "y" ]; then
-      read -r -s -p "Paste your fal.ai API key: " FAL_KEY; echo
+      read -r -p "Paste your fal.ai API key: " FAL_KEY; echo
       echo ""
       if [ -z "$FAL_KEY" ]; then
         echo -e "${RED}❌ No fal.ai key entered. Exiting.${NC}"
@@ -512,7 +512,7 @@ if [ "$SETUP_FAL" = true ]; then
       echo ""
     fi
   else
-    read -r -s -p "Paste your fal.ai API key: " FAL_KEY; echo
+    read -r -p "Paste your fal.ai API key: " FAL_KEY; echo
     echo ""
     if [ -z "$FAL_KEY" ]; then
       echo -e "${RED}❌ No fal.ai key entered. Exiting.${NC}"
