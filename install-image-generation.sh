@@ -59,7 +59,9 @@ select_fal_model() {
   echo "    6) Nano Banana 2    (fal-ai/nano-banana-2)     — Google, fast + edit"
   echo "    7) Nano Banana Pro  (fal-ai/nano-banana-pro)   — Google, highest quality"
   echo ""
-  read -p "Enter 1-7: " FAL_MODEL_CHOICE
+  echo "    8) Cancel"
+  echo ""
+  read -p "Enter 1-8: " FAL_MODEL_CHOICE
   echo ""
 
   case "$FAL_MODEL_CHOICE" in
@@ -70,6 +72,10 @@ select_fal_model() {
     5) FAL_MODEL_ID="fal-ai/flux-2-pro";      FAL_MODEL_NAME="FLUX.2 Pro";       FAL_SUPPORTS_EDIT=true ;;
     6) FAL_MODEL_ID="fal-ai/nano-banana-2";   FAL_MODEL_NAME="Nano Banana 2";    FAL_SUPPORTS_EDIT=true ;;
     7) FAL_MODEL_ID="fal-ai/nano-banana-pro"; FAL_MODEL_NAME="Nano Banana Pro";  FAL_SUPPORTS_EDIT=true ;;
+    8)
+      echo -e "${YELLOW}Cancelled — no changes have been made.${NC}"
+      exit 0
+      ;;
     *)
       echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
       exit 1
@@ -204,13 +210,19 @@ select_openai_model() {
   echo "    2) gpt-image-1         — Standard quality, ~\$0.17/image"
   echo "    3) gpt-image-1-mini    — Budget option, ~\$0.07/image"
   echo ""
-  read -p "Enter 1-3: " OPENAI_MODEL_CHOICE
+  echo "    4) Cancel"
+  echo ""
+  read -p "Enter 1-4: " OPENAI_MODEL_CHOICE
   echo ""
 
   case "$OPENAI_MODEL_CHOICE" in
     1) OPENAI_MODEL_ID="gpt-image-1.5";    OPENAI_MODEL_NAME="gpt-image-1.5 (Latest)" ;;
     2) OPENAI_MODEL_ID="gpt-image-1";      OPENAI_MODEL_NAME="gpt-image-1" ;;
     3) OPENAI_MODEL_ID="gpt-image-1-mini"; OPENAI_MODEL_NAME="gpt-image-1-mini" ;;
+    4)
+      echo -e "${YELLOW}Cancelled — no changes have been made.${NC}"
+      exit 0
+      ;;
     *)
       echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
       exit 1
@@ -278,8 +290,9 @@ echo "  1) Fresh setup    — Configure image generation from scratch"
 echo "  2) Switch model   — Change your current fal.ai model"
 echo "  3) Update keys    — Replace your OpenAI or fal.ai API key"
 echo "  4) Uninstall      — Remove image generation from OpenClaw"
+echo "  5) Cancel"
 echo ""
-read -p "Enter 1, 2, 3 or 4: " ACTION_CHOICE
+read -p "Enter 1-5: " ACTION_CHOICE
 echo ""
 
 # ============================================
@@ -374,11 +387,17 @@ if [ "$ACTION_CHOICE" = "3" ]; then
   echo "  1) fal.ai key     (FAL_KEY)          — Used by all fal.ai models"
   echo "  2) OpenAI key     (OPENAI_API_KEY)   — Used by all OpenAI image models"
   echo "  3) Both keys"
+  echo "  4) Cancel"
   echo ""
   echo -e "${YELLOW}Note: fal.ai and OpenAI use separate keys. Make sure you paste the correct key for each provider.${NC}"
   echo ""
-  read -p "Enter 1, 2 or 3: " KEY_CHOICE
+  read -p "Enter 1-4: " KEY_CHOICE
   echo ""
+
+  if [ "$KEY_CHOICE" = "4" ]; then
+    echo -e "${YELLOW}Cancelled — no changes have been made.${NC}"
+    exit 0
+  fi
 
   if [ "$KEY_CHOICE" != "1" ] && [ "$KEY_CHOICE" != "2" ] && [ "$KEY_CHOICE" != "3" ]; then
     echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
@@ -520,6 +539,11 @@ fi
 # ============================================
 # FRESH SETUP FLOW
 # ============================================
+if [ "$ACTION_CHOICE" = "5" ]; then
+  echo -e "${YELLOW}Cancelled — no changes have been made.${NC}"
+  exit 0
+fi
+
 if [ "$ACTION_CHOICE" != "1" ]; then
   echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
   exit 1
@@ -530,8 +554,9 @@ echo ""
 echo "  1) OpenAI only       (choose model)    — Latest: gpt-image-1.5, ~\$0.14/image"
 echo "  2) fal.ai only       (choose model)    — Multiple models available"
 echo "  3) Both              (OpenAI + fal.ai) — Set primary and fallback"
+echo "  4) Cancel"
 echo ""
-read -p "Enter 1, 2 or 3: " PROVIDER_CHOICE
+read -p "Enter 1-4: " PROVIDER_CHOICE
 echo ""
 
 SETUP_OPENAI=false
@@ -541,14 +566,19 @@ case "$PROVIDER_CHOICE" in
   1) SETUP_OPENAI=true ;;
   2) SETUP_FAL=true ;;
   3) SETUP_OPENAI=true; SETUP_FAL=true ;;
+  4)
+    echo -e "${YELLOW}Cancelled — no changes have been made.${NC}"
+    exit 0
+    ;;
   *)
-    echo -e "${RED}❌ Invalid choice. Please enter 1, 2 or 3.${NC}"
+    echo -e "${RED}❌ Invalid choice. Please enter 1-4.${NC}"
     exit 1
     ;;
 esac
 
 OPENAI_MODEL_ID=""
 OPENAI_MODEL_NAME=""
+PENDING_OPENAI_KEY=""
 
 if [ "$SETUP_OPENAI" = true ]; then
   select_openai_model
@@ -570,9 +600,8 @@ if [ "$SETUP_OPENAI" = true ]; then
       echo -e "${RED}❌ No OpenAI key entered. Exiting.${NC}"
       exit 1
     fi
-    sed -i '/^OPENAI_API_KEY/d' "$HOME/.openclaw/.env"
-    echo "OPENAI_API_KEY=$OPENAI_KEY" >> "$HOME/.openclaw/.env"
-    echo -e "${GREEN}✅ OpenAI key saved${NC}"
+    PENDING_OPENAI_KEY="$OPENAI_KEY"
+    echo -e "${GREEN}✅ OpenAI key received${NC}"
     echo ""
   fi
 fi
@@ -580,6 +609,7 @@ fi
 FAL_MODEL_ID=""
 FAL_MODEL_NAME=""
 FAL_SUPPORTS_EDIT=false
+PENDING_FAL_KEY=""
 
 if [ "$SETUP_FAL" = true ]; then
   select_fal_model
@@ -595,9 +625,8 @@ if [ "$SETUP_FAL" = true ]; then
         echo -e "${RED}❌ No fal.ai key entered. Exiting.${NC}"
         exit 1
       fi
-      sed -i '/^FAL_KEY/d' "$HOME/.openclaw/.env"
-      echo "FAL_KEY=$FAL_KEY" >> "$HOME/.openclaw/.env"
-      echo -e "${GREEN}✅ fal.ai key saved${NC}"
+      PENDING_FAL_KEY="$FAL_KEY"
+      echo -e "${GREEN}✅ fal.ai key received${NC}"
       echo ""
     fi
   else
@@ -607,9 +636,8 @@ if [ "$SETUP_FAL" = true ]; then
       echo -e "${RED}❌ No fal.ai key entered. Exiting.${NC}"
       exit 1
     fi
-    sed -i '/^FAL_KEY/d' "$HOME/.openclaw/.env"
-    echo "FAL_KEY=$FAL_KEY" >> "$HOME/.openclaw/.env"
-    echo -e "${GREEN}✅ fal.ai key saved${NC}"
+    PENDING_FAL_KEY="$FAL_KEY"
+    echo -e "${GREEN}✅ fal.ai key received${NC}"
     echo ""
   fi
 fi
@@ -622,8 +650,9 @@ if [ "$SETUP_OPENAI" = true ] && [ "$SETUP_FAL" = true ]; then
   echo ""
   echo "  1) OpenAI ($OPENAI_MODEL_NAME)"
   echo "  2) fal.ai ($FAL_MODEL_NAME)"
+  echo "  3) Cancel"
   echo ""
-  read -p "Enter 1 or 2: " PRIMARY_CHOICE
+  read -p "Enter 1-3: " PRIMARY_CHOICE
   echo ""
 
   if [ "$PRIMARY_CHOICE" = "1" ]; then
@@ -634,6 +663,9 @@ if [ "$SETUP_OPENAI" = true ] && [ "$SETUP_FAL" = true ]; then
     PRIMARY="fal/$FAL_MODEL_ID"
     FALLBACK="openai/$OPENAI_MODEL_ID"
     echo -e "${GREEN}✅ Primary: fal.ai ($FAL_MODEL_NAME) | Fallback: OpenAI ($OPENAI_MODEL_NAME)${NC}"
+  elif [ "$PRIMARY_CHOICE" = "3" ]; then
+    echo -e "${YELLOW}Cancelled — no changes have been made.${NC}"
+    exit 0
   else
     echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
     exit 1
@@ -647,6 +679,16 @@ elif [ "$SETUP_FAL" = true ]; then
 else
   echo -e "${RED}❌ No providers were configured. Exiting.${NC}"
   exit 1
+fi
+
+# ── Write all collected keys now (point of no return) ────────────────────────
+if [ -n "$PENDING_OPENAI_KEY" ]; then
+  sed -i '/^OPENAI_API_KEY/d' "$HOME/.openclaw/.env"
+  echo "OPENAI_API_KEY=$PENDING_OPENAI_KEY" >> "$HOME/.openclaw/.env"
+fi
+if [ -n "$PENDING_FAL_KEY" ]; then
+  sed -i '/^FAL_KEY/d' "$HOME/.openclaw/.env"
+  echo "FAL_KEY=$PENDING_FAL_KEY" >> "$HOME/.openclaw/.env"
 fi
 
 echo -e "${YELLOW}Updating openclaw.json...${NC}"
