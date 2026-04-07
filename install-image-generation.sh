@@ -587,13 +587,21 @@ if [ "$SETUP_OPENAI" = true ]; then
     echo -e "${YELLOW}⚠️  An existing OpenAI key was found in your .env file.${NC}"
     read -p "Do you want to replace it? (y/n): " REPLACE_OPENAI
     echo ""
-    if [ "$REPLACE_OPENAI" != "y" ]; then
+    if [ "$REPLACE_OPENAI" = "y" ]; then
+      read -r -p "Paste your OpenAI API key: " OPENAI_KEY; echo
+      echo ""
+      if [ -z "$OPENAI_KEY" ]; then
+        echo -e "${RED}❌ No OpenAI key entered. Exiting.${NC}"
+        exit 1
+      fi
+      PENDING_OPENAI_KEY="$OPENAI_KEY"
+      echo -e "${GREEN}✅ OpenAI key received${NC}"
+      echo ""
+    else
       echo "Keeping existing OpenAI key."
-      SETUP_OPENAI=false
+      echo ""
     fi
-  fi
-
-  if [ "$SETUP_OPENAI" = true ]; then
+  else
     read -r -p "Paste your OpenAI API key: " OPENAI_KEY; echo
     echo ""
     if [ -z "$OPENAI_KEY" ]; then
