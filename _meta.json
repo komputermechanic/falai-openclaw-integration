@@ -2,11 +2,11 @@
   "author": "Komputer Mechanic",
   "website": "https://komputermechanic.com/",
   "title": "OpenClaw Image Generation Setup",
-  "summary": "Interactive installer for OpenClaw image generation. Supports OpenAI (gpt-image-1) and fal.ai (7 models including FLUX and Nano Banana). Handles fresh setup, model switching, and uninstall. Automatically creates the fal_image skill, updates openclaw.json, saves API keys to .env, and restarts the OpenClaw gateway.",
+  "summary": "Interactive installer for OpenClaw image generation. Supports OpenAI (gpt-image-1.5, gpt-image-1, gpt-image-1-mini) and fal.ai (7 models including FLUX and Nano Banana). Handles fresh setup, model switching, and uninstall. Automatically creates the openai_image and fal_image skills, updates openclaw.json, saves API keys to .env, and restarts the OpenClaw gateway.",
   "script": "install-image-generation.sh",
   "providers": ["openai", "fal.ai"],
   "models": {
-    "openai": ["gpt-image-1"],
+    "openai": ["gpt-image-1.5", "gpt-image-1", "gpt-image-1-mini"],
     "fal": [
       "fal-ai/flux/dev",
       "fal-ai/flux/schnell",
@@ -18,5 +18,5 @@
     ]
   },
   "actions": ["fresh-setup", "switch-model", "uninstall"],
-  "skill_created": "fal_image"
+  "skills_created": ["openai_image", "fal_image"]
 }

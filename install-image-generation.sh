@@ -195,6 +195,81 @@ SKILLEOF
 }
 
 # ============================================
+# OPENAI MODEL SELECTION FUNCTION
+# ============================================
+select_openai_model() {
+  echo -e "${BOLD}Which OpenAI model do you want to use?${NC}"
+  echo ""
+  echo "    1) gpt-image-1.5       — Latest, 4x faster, best text, ~\$0.14/image  ${BOLD}(recommended)${NC}"
+  echo "    2) gpt-image-1         — Standard quality, ~\$0.17/image"
+  echo "    3) gpt-image-1-mini    — Budget option, ~\$0.07/image"
+  echo ""
+  read -p "Enter 1-3: " OPENAI_MODEL_CHOICE
+  echo ""
+
+  case "$OPENAI_MODEL_CHOICE" in
+    1) OPENAI_MODEL_ID="gpt-image-1.5";    OPENAI_MODEL_NAME="gpt-image-1.5 (Latest)" ;;
+    2) OPENAI_MODEL_ID="gpt-image-1";      OPENAI_MODEL_NAME="gpt-image-1" ;;
+    3) OPENAI_MODEL_ID="gpt-image-1-mini"; OPENAI_MODEL_NAME="gpt-image-1-mini" ;;
+    *)
+      echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
+      exit 1
+      ;;
+  esac
+
+  echo -e "${GREEN}✅ Selected: $OPENAI_MODEL_NAME${NC}"
+  echo ""
+}
+
+# ============================================
+# CREATE OPENAI SKILL FUNCTION
+# ============================================
+create_openai_skill() {
+  OPENAI_SKILL_DIR="$HOME/.openclaw/skills/openai-image"
+  mkdir -p "$OPENAI_SKILL_DIR"
+
+  cat > "$OPENAI_SKILL_DIR/SKILL.md" << SKILLEOF
+---
+name: openai_image
+description: Generate a high-quality image using OpenAI $OPENAI_MODEL_NAME. Use this when the user asks to generate an image, create a thumbnail, or visualize something.
+---
+
+# OpenAI $OPENAI_MODEL_NAME — Image Generation
+
+When the user asks to generate or create an image, use the \`exec\` tool to run this curl command:
+
+\`\`\`bash
+curl --silent --request POST \\
+  --url https://api.openai.com/v1/images/generations \\
+  --header "Authorization: Bearer \$OPENAI_API_KEY" \\
+  --header "Content-Type: application/json" \\
+  --data '{
+    "model": "$OPENAI_MODEL_ID",
+    "prompt": "USER_PROMPT_HERE",
+    "n": 1,
+    "size": "1024x1024",
+    "quality": "standard"
+  }'
+\`\`\`
+
+After getting the response, extract the image URL from \`data[0].url\` and share it with the user.
+
+---
+
+## Options
+- **size**: \`1024x1024\` (default), \`1024x1792\` (portrait), \`1792x1024\` (landscape)
+- **quality**: \`standard\` (default), \`hd\` (higher detail, higher cost)
+- **n**: number of images to generate (1–4)
+
+## Notes
+- This model supports generation only — for image editing use the fal_image skill if available
+- Always use the size that best fits the user's request
+SKILLEOF
+
+  echo -e "${GREEN}✅ OpenAI skill created at $OPENAI_SKILL_DIR/SKILL.md${NC}"
+}
+
+# ============================================
 # WHAT DO YOU WANT TO DO?
 # ============================================
 echo -e "${BOLD}What do you want to do?${NC}"
@@ -214,7 +289,7 @@ if [ "$ACTION_CHOICE" = "4" ]; then
 
   echo -e "${YELLOW}This will:${NC}"
   echo "  - Remove imageGenerationModel from openclaw.json"
-  echo "  - Delete the fal-image skill folder"
+  echo "  - Delete the fal-image and openai-image skill folders"
   echo "  - Optionally remove your API keys from .env"
   echo ""
   read -p "Are you sure you want to uninstall? (y/n): " CONFIRM_UNINSTALL
@@ -236,13 +311,22 @@ if [ "$ACTION_CHOICE" = "4" ]; then
     console.log('✅ imageGenerationModel removed from openclaw.json');
   "
 
-  # Delete skill folder
+  # Delete fal skill folder
   SKILL_DIR="$HOME/.openclaw/skills/fal-image"
   if [ -d "$SKILL_DIR" ]; then
     rm -rf "$SKILL_DIR"
     echo -e "${GREEN}✅ fal-image skill folder deleted${NC}"
   else
     echo -e "${YELLOW}⚠️  No fal-image skill folder found — skipping${NC}"
+  fi
+
+  # Delete openai skill folder
+  OPENAI_SKILL_DIR="$HOME/.openclaw/skills/openai-image"
+  if [ -d "$OPENAI_SKILL_DIR" ]; then
+    rm -rf "$OPENAI_SKILL_DIR"
+    echo -e "${GREEN}✅ openai-image skill folder deleted${NC}"
+  else
+    echo -e "${YELLOW}⚠️  No openai-image skill folder found — skipping${NC}"
   fi
 
   # Ask about API keys
@@ -288,7 +372,7 @@ if [ "$ACTION_CHOICE" = "3" ]; then
   echo -e "${BOLD}Which API key do you want to update?${NC}"
   echo ""
   echo "  1) fal.ai key     (FAL_KEY)          — Used by all fal.ai models"
-  echo "  2) OpenAI key     (OPENAI_API_KEY)   — Used by gpt-image-1 only"
+  echo "  2) OpenAI key     (OPENAI_API_KEY)   — Used by all OpenAI image models"
   echo "  3) Both keys"
   echo ""
   echo -e "${YELLOW}Note: fal.ai and OpenAI use separate keys. Make sure you paste the correct key for each provider.${NC}"
@@ -320,7 +404,7 @@ if [ "$ACTION_CHOICE" = "3" ]; then
 
   if [ "$KEY_CHOICE" = "2" ] || [ "$KEY_CHOICE" = "3" ]; then
     echo -e "${BOLD}Updating OpenAI key (OPENAI_API_KEY)${NC}"
-    echo "This key is used ONLY by the OpenAI provider (gpt-image-1)."
+    echo "This key is used by all OpenAI image models (gpt-image-1.5, gpt-image-1, gpt-image-1-mini)."
     echo "Get your key at: https://platform.openai.com/api-keys"
     echo ""
     read -r -p "Paste your OpenAI API key: " NEW_OPENAI_KEY; echo
@@ -443,7 +527,7 @@ fi
 
 echo -e "${BOLD}Which providers do you want to set up?${NC}"
 echo ""
-echo "  1) OpenAI only       (gpt-image-1)     — Best quality, ~\$0.17/image"
+echo "  1) OpenAI only       (choose model)    — Latest: gpt-image-1.5, ~\$0.14/image"
 echo "  2) fal.ai only       (choose model)    — Multiple models available"
 echo "  3) Both              (OpenAI + fal.ai) — Set primary and fallback"
 echo ""
@@ -463,7 +547,12 @@ case "$PROVIDER_CHOICE" in
     ;;
 esac
 
+OPENAI_MODEL_ID=""
+OPENAI_MODEL_NAME=""
+
 if [ "$SETUP_OPENAI" = true ]; then
+  select_openai_model
+
   if grep -q "OPENAI_API_KEY" "$HOME/.openclaw/.env" 2>/dev/null; then
     echo -e "${YELLOW}⚠️  An existing OpenAI key was found in your .env file.${NC}"
     read -p "Do you want to replace it? (y/n): " REPLACE_OPENAI
@@ -531,20 +620,20 @@ FALLBACK=""
 if [ "$SETUP_OPENAI" = true ] && [ "$SETUP_FAL" = true ]; then
   echo -e "${BOLD}Which one do you want as your primary provider?${NC}"
   echo ""
-  echo "  1) OpenAI (gpt-image-1)"
+  echo "  1) OpenAI ($OPENAI_MODEL_NAME)"
   echo "  2) fal.ai ($FAL_MODEL_NAME)"
   echo ""
   read -p "Enter 1 or 2: " PRIMARY_CHOICE
   echo ""
 
   if [ "$PRIMARY_CHOICE" = "1" ]; then
-    PRIMARY="openai/gpt-image-1"
+    PRIMARY="openai/$OPENAI_MODEL_ID"
     FALLBACK="fal/$FAL_MODEL_ID"
-    echo -e "${GREEN}✅ Primary: OpenAI | Fallback: fal.ai ($FAL_MODEL_NAME)${NC}"
+    echo -e "${GREEN}✅ Primary: OpenAI ($OPENAI_MODEL_NAME) | Fallback: fal.ai ($FAL_MODEL_NAME)${NC}"
   elif [ "$PRIMARY_CHOICE" = "2" ]; then
     PRIMARY="fal/$FAL_MODEL_ID"
-    FALLBACK="openai/gpt-image-1"
-    echo -e "${GREEN}✅ Primary: fal.ai ($FAL_MODEL_NAME) | Fallback: OpenAI${NC}"
+    FALLBACK="openai/$OPENAI_MODEL_ID"
+    echo -e "${GREEN}✅ Primary: fal.ai ($FAL_MODEL_NAME) | Fallback: OpenAI ($OPENAI_MODEL_NAME)${NC}"
   else
     echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
     exit 1
@@ -552,7 +641,7 @@ if [ "$SETUP_OPENAI" = true ] && [ "$SETUP_FAL" = true ]; then
   echo ""
 
 elif [ "$SETUP_OPENAI" = true ]; then
-  PRIMARY="openai/gpt-image-1"
+  PRIMARY="openai/$OPENAI_MODEL_ID"
 elif [ "$SETUP_FAL" = true ]; then
   PRIMARY="fal/$FAL_MODEL_ID"
 else
@@ -593,6 +682,12 @@ if [ "$SETUP_FAL" = true ]; then
   create_fal_skill
 fi
 
+if [ "$SETUP_OPENAI" = true ]; then
+  echo ""
+  echo -e "${YELLOW}Creating OpenAI skill...${NC}"
+  create_openai_skill
+fi
+
 echo ""
 echo -e "${YELLOW}Restarting OpenClaw gateway...${NC}"
 openclaw gateway restart
@@ -604,6 +699,12 @@ if [ "$SETUP_FAL" = true ]; then
   openclaw skills list | grep fal_image && echo -e "${GREEN}✅ fal_image skill is active${NC}" || echo -e "${YELLOW}⚠️  Tell your agent: 'I installed a new skill called fal_image at ~/.openclaw/skills/fal-image/SKILL.md'${NC}"
 fi
 
+if [ "$SETUP_OPENAI" = true ]; then
+  echo ""
+  echo -e "${YELLOW}Verifying OpenAI skill...${NC}"
+  openclaw skills list | grep openai_image && echo -e "${GREEN}✅ openai_image skill is active${NC}" || echo -e "${YELLOW}⚠️  Tell your agent: 'I installed a new skill called openai_image at ~/.openclaw/skills/openai-image/SKILL.md'${NC}"
+fi
+
 echo ""
 echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}  Setup complete!${NC}"
@@ -611,12 +712,15 @@ echo -e "${GREEN}============================================${NC}"
 echo ""
 echo -e "Primary provider:  ${BOLD}$PRIMARY${NC}"
 [ -n "$FALLBACK" ] && echo -e "Fallback provider: ${BOLD}$FALLBACK${NC}"
+if [ "$SETUP_OPENAI" = true ]; then
+  echo -e "OpenAI model:      ${BOLD}$OPENAI_MODEL_NAME${NC}"
+fi
 if [ "$SETUP_FAL" = true ]; then
   echo -e "fal.ai model:      ${BOLD}$FAL_MODEL_NAME${NC}"
   if [ "$FAL_SUPPORTS_EDIT" = true ]; then
     echo -e "Edit support:      ${GREEN}✅ Yes${NC}"
   else
-    echo -e "Edit support:      ${YELLOW}❌ No${NC}"
+    echo -e "Edit support:      ${YELLOW}❌ No (generation only)${NC}"
   fi
 fi
 echo ""
@@ -625,15 +729,40 @@ echo -e "${CYAN}============================================${NC}"
 echo -e "${CYAN}  Copy and send this to your agent:${NC}"
 echo -e "${CYAN}============================================${NC}"
 echo ""
-echo "Hey! I just configured a new image generation skill for you called fal_image."
-echo "The skill file is located at ~/.openclaw/skills/fal-image/SKILL.md"
-echo ""
-echo "Please do the following:"
-echo "1. Read the skill file at that location"
-echo "2. Confirm you understand how to use it"
-echo "3. Run a smoke test by generating this image:"
-echo "   A futuristic African city skyline at sunset, cinematic lighting"
-echo "4. Return the image URL to confirm everything is working"
+
+if [ "$SETUP_OPENAI" = true ] && [ "$SETUP_FAL" = true ]; then
+  echo "Hey! I just configured two image generation skills for you:"
+  echo "  - openai_image  → ~/.openclaw/skills/openai-image/SKILL.md  (OpenAI $OPENAI_MODEL_NAME)"
+  echo "  - fal_image     → ~/.openclaw/skills/fal-image/SKILL.md     (fal.ai $FAL_MODEL_NAME)"
+  echo ""
+  echo "Please do the following:"
+  echo "1. Read both skill files at those locations"
+  echo "2. Confirm you understand how to use each one"
+  echo "3. Run a smoke test using the primary provider by generating this image:"
+  echo "   A futuristic African city skyline at sunset, cinematic lighting"
+  echo "4. Return the image URL to confirm everything is working"
+elif [ "$SETUP_OPENAI" = true ]; then
+  echo "Hey! I just configured a new image generation skill for you called openai_image."
+  echo "The skill file is located at ~/.openclaw/skills/openai-image/SKILL.md"
+  echo ""
+  echo "Please do the following:"
+  echo "1. Read the skill file at that location"
+  echo "2. Confirm you understand how to use it"
+  echo "3. Run a smoke test by generating this image:"
+  echo "   A futuristic African city skyline at sunset, cinematic lighting"
+  echo "4. Return the image URL to confirm everything is working"
+else
+  echo "Hey! I just configured a new image generation skill for you called fal_image."
+  echo "The skill file is located at ~/.openclaw/skills/fal-image/SKILL.md"
+  echo ""
+  echo "Please do the following:"
+  echo "1. Read the skill file at that location"
+  echo "2. Confirm you understand how to use it"
+  echo "3. Run a smoke test by generating this image:"
+  echo "   A futuristic African city skyline at sunset, cinematic lighting"
+  echo "4. Return the image URL to confirm everything is working"
+fi
+
 echo ""
 echo -e "${CYAN}============================================${NC}"
 echo ""
