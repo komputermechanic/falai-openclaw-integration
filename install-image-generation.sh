@@ -537,34 +537,129 @@ if [ "$ACTION_CHOICE" = "2" ]; then
   echo -e "Current model: ${BOLD}$CURRENT_MODEL${NC}"
   echo ""
 
-  select_fal_model
+  echo -e "${BOLD}Which provider do you want to switch to?${NC}"
+  echo ""
+  echo "  1) fal.ai   (choose model)"
+  echo "  2) OpenAI   (choose model)"
+  echo "  3) Cancel"
+  echo ""
+  read -p "Enter 1-3: " SWITCH_PROVIDER
+  echo ""
 
-  node -e "
-    const fs = require('fs');
-    const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
-    cfg.agents = cfg.agents || {};
-    cfg.agents.defaults = cfg.agents.defaults || {};
-    const current = cfg.agents.defaults.imageGenerationModel;
+  if [ "$SWITCH_PROVIDER" = "3" ]; then
+    echo -e "${YELLOW}Cancelled — no changes have been made.${NC}"
+    exit 0
+  fi
 
-    if (current && typeof current === 'object') {
-      if (current.primary && current.primary.startsWith('fal/')) {
-        current.primary = 'fal/$FAL_MODEL_ID';
+  if [ "$SWITCH_PROVIDER" != "1" ] && [ "$SWITCH_PROVIDER" != "2" ]; then
+    echo -e "${RED}❌ Invalid choice. Exiting.${NC}"
+    exit 1
+  fi
+
+  SWITCH_FAL=false
+  SWITCH_OPENAI=false
+  [ "$SWITCH_PROVIDER" = "1" ] && SWITCH_FAL=true
+  [ "$SWITCH_PROVIDER" = "2" ] && SWITCH_OPENAI=true
+
+  # Select model
+  [ "$SWITCH_FAL" = true ] && select_fal_model
+  [ "$SWITCH_OPENAI" = true ] && select_openai_model
+
+  # Check API key exists for the chosen provider — prompt if missing
+  if [ "$SWITCH_FAL" = true ]; then
+    if ! grep -q "FAL_KEY" "$HOME/.openclaw/.env" 2>/dev/null; then
+      echo -e "${YELLOW}⚠️  No fal.ai API key found. You need one to use this model.${NC}"
+      echo "Get your key at: https://fal.ai/dashboard/keys"
+      echo ""
+      read -r -p "Paste your fal.ai API key: " FAL_KEY; echo
+      echo ""
+      if [ -z "$FAL_KEY" ]; then
+        echo -e "${RED}❌ No key entered. Exiting.${NC}"
+        exit 1
+      fi
+      if ! validate_fal_key "$FAL_KEY"; then exit 1; fi
+      echo "FAL_KEY=$FAL_KEY" >> "$HOME/.openclaw/.env"
+      echo -e "${GREEN}✅ fal.ai key saved${NC}"
+      echo ""
+    fi
+  fi
+
+  if [ "$SWITCH_OPENAI" = true ]; then
+    if ! grep -q "OPENAI_API_KEY" "$HOME/.openclaw/.env" 2>/dev/null; then
+      echo -e "${YELLOW}⚠️  No OpenAI API key found. You need one to use this model.${NC}"
+      echo "Get your key at: https://platform.openai.com/api-keys"
+      echo ""
+      read -r -p "Paste your OpenAI API key: " OPENAI_KEY; echo
+      echo ""
+      if [ -z "$OPENAI_KEY" ]; then
+        echo -e "${RED}❌ No key entered. Exiting.${NC}"
+        exit 1
+      fi
+      if ! validate_openai_key "$OPENAI_KEY"; then exit 1; fi
+      echo "OPENAI_API_KEY=$OPENAI_KEY" >> "$HOME/.openclaw/.env"
+      echo -e "${GREEN}✅ OpenAI key saved${NC}"
+      echo ""
+    fi
+  fi
+
+  # Update openclaw.json
+  if [ "$SWITCH_FAL" = true ]; then
+    node -e "
+      const fs = require('fs');
+      const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
+      cfg.agents = cfg.agents || {};
+      cfg.agents.defaults = cfg.agents.defaults || {};
+      const current = cfg.agents.defaults.imageGenerationModel;
+      if (current && typeof current === 'object') {
+        if (current.primary && current.primary.startsWith('fal/')) {
+          current.primary = 'fal/$FAL_MODEL_ID';
+        }
+        if (current.fallbacks) {
+          current.fallbacks = current.fallbacks.map(f =>
+            f.startsWith('fal/') ? 'fal/$FAL_MODEL_ID' : f
+          );
+        }
+        cfg.agents.defaults.imageGenerationModel = current;
+      } else {
+        cfg.agents.defaults.imageGenerationModel = 'fal/$FAL_MODEL_ID';
       }
-      if (current.fallbacks) {
-        current.fallbacks = current.fallbacks.map(f =>
-          f.startsWith('fal/') ? 'fal/$FAL_MODEL_ID' : f
-        );
+      fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
+      console.log('✅ openclaw.json updated');
+    "
+    create_fal_skill
+    SWITCH_SKILL_PATH="~/.openclaw/skills/fal-image/SKILL.md"
+    SWITCH_SKILL_NAME="fal_image"
+    SWITCH_MODEL_LABEL="$FAL_MODEL_NAME"
+  fi
+
+  if [ "$SWITCH_OPENAI" = true ]; then
+    node -e "
+      const fs = require('fs');
+      const cfg = JSON.parse(fs.readFileSync('$CONFIG', 'utf8'));
+      cfg.agents = cfg.agents || {};
+      cfg.agents.defaults = cfg.agents.defaults || {};
+      const current = cfg.agents.defaults.imageGenerationModel;
+      if (current && typeof current === 'object') {
+        if (current.primary && current.primary.startsWith('openai/')) {
+          current.primary = 'openai/$OPENAI_MODEL_ID';
+        }
+        if (current.fallbacks) {
+          current.fallbacks = current.fallbacks.map(f =>
+            f.startsWith('openai/') ? 'openai/$OPENAI_MODEL_ID' : f
+          );
+        }
+        cfg.agents.defaults.imageGenerationModel = current;
+      } else {
+        cfg.agents.defaults.imageGenerationModel = 'openai/$OPENAI_MODEL_ID';
       }
-      cfg.agents.defaults.imageGenerationModel = current;
-    } else {
-      cfg.agents.defaults.imageGenerationModel = 'fal/$FAL_MODEL_ID';
-    }
-
-    fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
-    console.log('✅ openclaw.json updated with new fal model');
-  "
-
-  create_fal_skill
+      fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
+      console.log('✅ openclaw.json updated');
+    "
+    create_openai_skill
+    SWITCH_SKILL_PATH="~/.openclaw/skills/openai-image/SKILL.md"
+    SWITCH_SKILL_NAME="openai_image"
+    SWITCH_MODEL_LABEL="$OPENAI_MODEL_NAME"
+  fi
 
   echo ""
   echo -e "${YELLOW}Restarting OpenClaw gateway...${NC}"
@@ -576,27 +671,26 @@ if [ "$ACTION_CHOICE" = "2" ]; then
   echo -e "${GREEN}  Model switched successfully!${NC}"
   echo -e "${GREEN}============================================${NC}"
   echo ""
-  echo -e "New fal.ai model: ${BOLD}$FAL_MODEL_NAME${NC}"
-  if [ "$FAL_SUPPORTS_EDIT" = true ]; then
-    echo -e "Edit support:     ${GREEN}✅ Yes${NC}"
-  else
-    echo -e "Edit support:     ${YELLOW}❌ No${NC}"
+  echo -e "New model: ${BOLD}$SWITCH_MODEL_LABEL${NC}"
+  if [ "$SWITCH_FAL" = true ] && [ "$FAL_SUPPORTS_EDIT" = true ]; then
+    echo -e "Edit support: ${GREEN}✅ Yes${NC}"
+  elif [ "$SWITCH_FAL" = true ]; then
+    echo -e "Edit support: ${YELLOW}❌ No${NC}"
   fi
-  echo ""
   echo ""
   echo -e "${CYAN}============================================${NC}"
   echo -e "${CYAN}  Copy and send this to your agent:${NC}"
   echo -e "${CYAN}============================================${NC}"
   echo ""
-  echo "Hey! I just updated your image generation skill fal_image to use $FAL_MODEL_NAME."
-  echo "The updated skill file is located at ~/.openclaw/skills/fal-image/SKILL.md"
+  echo "Hey! I just switched your image generation skill to use $SWITCH_MODEL_LABEL."
+  echo "The updated skill file is located at $SWITCH_SKILL_PATH"
   echo ""
   echo "Please do the following:"
   echo "1. Re-read the skill file at that location"
   echo "2. Confirm you understand the updated configuration"
   echo "3. Run a smoke test by generating this image:"
   echo "   A futuristic African city skyline at sunset, cinematic lighting"
-  echo "4. Return the image URL to confirm everything is working"
+  echo "4. Return the result to confirm everything is working"
   echo ""
   echo -e "${CYAN}============================================${NC}"
   echo ""
