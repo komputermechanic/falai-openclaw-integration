@@ -47,11 +47,15 @@ touch "$HOME/.openclaw/.env"
 # ============================================
 validate_openai_key() {
   local key="$1"
-  if [[ ! "$key" =~ ^sk- ]]; then
-    echo -e "${RED}❌ Invalid OpenAI key — must start with 'sk-'${NC}"
-    return 1
-  fi
-  if [ "${#key}" -lt 30 ]; then
+  case "$key" in
+    sk-*) ;;
+    *)
+      echo -e "${RED}❌ Invalid OpenAI key — must start with 'sk-'${NC}"
+      echo "   Get your key at: https://platform.openai.com/api-keys"
+      return 1
+      ;;
+  esac
+  if [ "$(echo -n "$key" | wc -c)" -lt 30 ]; then
     echo -e "${RED}❌ Invalid OpenAI key — too short${NC}"
     return 1
   fi
@@ -60,11 +64,14 @@ validate_openai_key() {
 
 validate_fal_key() {
   local key="$1"
-  if [[ "$key" == *" "* ]]; then
-    echo -e "${RED}❌ Invalid fal.ai key — must not contain spaces${NC}"
-    return 1
-  fi
-  if [ "${#key}" -lt 20 ]; then
+  case "$key" in
+    *\ *)
+      echo -e "${RED}❌ Invalid fal.ai key — must not contain spaces${NC}"
+      echo "   Get your key at: https://fal.ai/dashboard/keys"
+      return 1
+      ;;
+  esac
+  if [ "$(echo -n "$key" | wc -c)" -lt 20 ]; then
     echo -e "${RED}❌ Invalid fal.ai key — too short${NC}"
     return 1
   fi
