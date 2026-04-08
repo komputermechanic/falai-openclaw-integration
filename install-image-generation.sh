@@ -297,8 +297,9 @@ Created by **Komputer Mechanic** — <https://komputermechanic.com/>
 
 > Use this skill at your own risk. Komputer Mechanic is not liable for any errors, costs, or issues arising from its use.
 
-When the user asks to generate or create an image, use the \`exec\` tool to run this curl command:
+When the user asks to generate or create an image, use the \`exec\` tool to run these commands:
 
+**Step 1 — Generate and save the response to a file:**
 \`\`\`bash
 curl --silent --request POST \\
   --url https://api.openai.com/v1/images/generations \\
@@ -310,26 +311,29 @@ curl --silent --request POST \\
     "n": 1,
     "size": "1024x1024",
     "quality": "auto"
-  }'
+  }' > ~/.openclaw/workspace/ai-generated-images/response.json
 \`\`\`
 
-Inspect the response JSON to determine the format:
-
-**If \`data[0].url\` exists**, share the URL directly with the user — OpenClaw will deliver it as an image attachment.
-
-**If \`data[0].b64_json\` exists**:
-
-1. Decode the image using the \`exec\` tool (save to the workspace, not /tmp):
+**Step 2 — Check the response format:**
 \`\`\`bash
-mkdir -p ~/.openclaw/workspace/ai-generated-images
-echo "BASE64_STRING_HERE" | base64 --decode > ~/.openclaw/workspace/ai-generated-images/image-$(date +%s).png
+jq -r 'if .data[0].url then "url" elif .data[0].b64_json then "b64" else "error" end' ~/.openclaw/workspace/ai-generated-images/response.json
 \`\`\`
 
-2. Use the \`session_status\` tool to get the current session's channel and routing target.
-
-3. Send the image using the \`exec\` tool with the channel and target from step 2:
+**If the format is \`url\`**, share the URL directly with the user — OpenClaw will deliver it as an image attachment:
 \`\`\`bash
-openclaw message send --channel CHANNEL_HERE --target TARGET_HERE --media ~/.openclaw/workspace/ai-generated-images/image-TIMESTAMP.png --message "Here's your image!"
+jq -r '.data[0].url' ~/.openclaw/workspace/ai-generated-images/response.json
+\`\`\`
+
+**If the format is \`b64\`**, decode via file (avoids shell truncation):
+\`\`\`bash
+IMG=~/.openclaw/workspace/ai-generated-images/image-$(date +%s).png
+jq -r '.data[0].b64_json' ~/.openclaw/workspace/ai-generated-images/response.json | base64 --decode > "\$IMG"
+echo "\$IMG"
+\`\`\`
+
+Then use the \`session_status\` tool to get the current session's channel and routing target, and send the image:
+\`\`\`bash
+openclaw message send --channel CHANNEL_HERE --target TARGET_HERE --media PATH_FROM_ABOVE --message "Here's your image!"
 \`\`\`
 
 ---
