@@ -272,7 +272,7 @@ curl --silent --request POST \\
     "prompt": "USER_PROMPT_HERE",
     "n": 1,
     "size": "1024x1024",
-    "quality": "standard"
+    "quality": "auto"
   }'
 \`\`\`
 
@@ -282,7 +282,7 @@ After getting the response, extract the image URL from \`data[0].url\` and share
 
 ## Options
 - **size**: \`1024x1024\` (default), \`1024x1792\` (portrait), \`1792x1024\` (landscape)
-- **quality**: \`standard\` (default), \`hd\` (higher detail, higher cost)
+- **quality**: \`auto\` (default), \`low\`, \`medium\`, \`high\`
 - **n**: number of images to generate (1–4)
 
 ## Notes
