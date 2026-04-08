@@ -156,7 +156,7 @@ curl --silent --request POST \\
 
 Replace EDIT_INSTRUCTION_HERE with what the user wants changed and IMAGE_URL_HERE with the image URL.
 
-After getting the response, extract the image URL from the JSON and share it with the user.
+After getting the response, extract the image URL from \`images[0].url\` and share it with the user.
 
 ---
 
