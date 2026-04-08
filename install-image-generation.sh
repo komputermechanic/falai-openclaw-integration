@@ -369,9 +369,10 @@ echo "  1) Fresh setup    — Configure image generation from scratch"
 echo "  2) Switch model   — Change your current fal.ai model"
 echo "  3) Update keys    — Replace your OpenAI or fal.ai API key"
 echo "  4) Uninstall      — Remove image generation from OpenClaw"
-echo "  5) Cancel"
+echo "  5) Update skill   — Regenerate skill files (keeps keys + config)"
+echo "  6) Cancel"
 echo ""
-read -p "Enter 1-5: " ACTION_CHOICE
+read -p "Enter 1-6: " ACTION_CHOICE
 echo ""
 
 # ============================================
@@ -724,7 +725,44 @@ fi
 # ============================================
 # FRESH SETUP FLOW
 # ============================================
+# ============================================
+# UPDATE SKILL FILES FLOW
+# ============================================
 if [ "$ACTION_CHOICE" = "5" ]; then
+
+  FAL_SKILL_DIR="$HOME/.openclaw/skills/fal-image"
+  OPENAI_SKILL_DIR="$HOME/.openclaw/skills/openai-image"
+  UPDATED=false
+
+  if [ -d "$FAL_SKILL_DIR" ]; then
+    echo -e "${YELLOW}Updating fal.ai skill files...${NC}"
+    create_fal_skill
+    echo -e "${GREEN}✅ fal.ai skill updated${NC}"
+    UPDATED=true
+  fi
+
+  if [ -d "$OPENAI_SKILL_DIR" ]; then
+    echo -e "${YELLOW}Updating OpenAI skill files...${NC}"
+    create_openai_skill
+    echo -e "${GREEN}✅ OpenAI skill updated${NC}"
+    UPDATED=true
+  fi
+
+  if [ "$UPDATED" = false ]; then
+    echo -e "${RED}❌ No image generation skills found. Run option 1 to install first.${NC}"
+    exit 1
+  fi
+
+  echo ""
+  echo -e "${GREEN}============================================${NC}"
+  echo -e "${GREEN}  Skill files updated successfully!${NC}"
+  echo -e "${GREEN}============================================${NC}"
+  echo "Your API keys and model config were not changed."
+  echo ""
+  exit 0
+fi
+
+if [ "$ACTION_CHOICE" = "6" ]; then
   echo -e "${YELLOW}Cancelled — no changes have been made.${NC}"
   exit 0
 fi
