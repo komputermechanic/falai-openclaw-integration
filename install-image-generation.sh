@@ -313,12 +313,14 @@ curl --silent --request POST \\
 \`\`\`
 
 Inspect the response JSON to determine the format:
-- If \`data[0].url\` exists: share the URL directly with the user
-- If \`data[0].b64_json\` exists: decode it and save to a file, then share the file path:
+- If \`data[0].url\` exists: send the image URL directly to the user
+- If \`data[0].b64_json\` exists: decode and save to a temp file:
 
 \`\`\`bash
-echo "BASE64_STRING_HERE" | base64 --decode > image.png
+echo "BASE64_STRING_HERE" | base64 --decode > /tmp/generated-image.png
 \`\`\`
+
+Then **send the saved image file back to the user as an image attachment** using whatever tool is available to deliver files in the current chat context. Do not just reply with the file path — the user expects to see the actual image.
 
 ---
 
