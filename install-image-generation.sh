@@ -316,11 +316,18 @@ Inspect the response JSON to determine the format:
 
 **If \`data[0].url\` exists**, share the URL directly with the user — OpenClaw will deliver it as an image attachment.
 
-**If \`data[0].b64_json\` exists**, decode it to a temp file then send it using the \`exec\` tool:
+**If \`data[0].b64_json\` exists**:
 
+1. Decode the image using the \`exec\` tool:
 \`\`\`bash
 echo "BASE64_STRING_HERE" | base64 --decode > /tmp/generated-image.png
-openclaw message send --media /tmp/generated-image.png --message "Here's your image!"
+\`\`\`
+
+2. Use the \`session_status\` tool to get the current session's channel and routing target.
+
+3. Send the image using the \`exec\` tool with the channel and target from step 2:
+\`\`\`bash
+openclaw message send --channel CHANNEL_HERE --target TARGET_HERE --media /tmp/generated-image.png --message "Here's your image!"
 \`\`\`
 
 ---
