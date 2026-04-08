@@ -119,7 +119,7 @@ When the user asks to generate or create an image, use the \`exec\` tool to run 
 
 \`\`\`bash
 curl --silent --request POST \\
-  --url https://queue.fal.run/$FAL_MODEL_ID \\
+  --url https://fal.run/$FAL_MODEL_ID \\
   --header "Authorization: Key \$FAL_KEY" \\
   --header "Content-Type: application/json" \\
   --data '{
@@ -131,7 +131,7 @@ curl --silent --request POST \\
   }'
 \`\`\`
 
-After getting the response, extract the image URL from the JSON and share it with the user.
+After getting the response, extract the image URL from \`images[0].url\` and share it with the user.
 
 ---
 
@@ -141,7 +141,7 @@ When the user asks to edit or modify an existing image and provides an image URL
 
 \`\`\`bash
 curl --silent --request POST \\
-  --url https://queue.fal.run/$EDIT_ENDPOINT \\
+  --url https://fal.run/$EDIT_ENDPOINT \\
   --header "Authorization: Key \$FAL_KEY" \\
   --header "Content-Type: application/json" \\
   --data '{
@@ -183,7 +183,7 @@ When the user asks to generate or create an image, use the \`exec\` tool to run 
 
 \`\`\`bash
 curl --silent --request POST \\
-  --url https://queue.fal.run/$FAL_MODEL_ID \\
+  --url https://fal.run/$FAL_MODEL_ID \\
   --header "Authorization: Key \$FAL_KEY" \\
   --header "Content-Type: application/json" \\
   --data '{
@@ -195,7 +195,7 @@ curl --silent --request POST \\
   }'
 \`\`\`
 
-After getting the response, extract the image URL from the JSON and share it with the user.
+After getting the response, extract the image URL from \`images[0].url\` and share it with the user.
 
 ---
 
@@ -809,7 +809,7 @@ if [ "$SETUP_OPENAI" = true ] && [ "$SETUP_FAL" = true ]; then
   echo "2. Confirm you understand how to use each one"
   echo "3. Run a smoke test using the primary provider by generating this image:"
   echo "   A futuristic African city skyline at sunset, cinematic lighting"
-  echo "4. Return the image URL to confirm everything is working"
+  echo "4. Return the result (image URL for fal.ai, or saved file path for OpenAI) to confirm everything is working"
 elif [ "$SETUP_OPENAI" = true ]; then
   echo "Hey! I just configured a new image generation skill for you called openai_image."
   echo "The skill file is located at ~/.openclaw/skills/openai-image/SKILL.md"
@@ -819,7 +819,7 @@ elif [ "$SETUP_OPENAI" = true ]; then
   echo "2. Confirm you understand how to use it"
   echo "3. Run a smoke test by generating this image:"
   echo "   A futuristic African city skyline at sunset, cinematic lighting"
-  echo "4. Return the image URL to confirm everything is working"
+  echo "4. Return the saved file path to confirm everything is working"
 else
   echo "Hey! I just configured a new image generation skill for you called fal_image."
   echo "The skill file is located at ~/.openclaw/skills/fal-image/SKILL.md"
