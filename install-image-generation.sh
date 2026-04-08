@@ -407,21 +407,31 @@ if [ "$ACTION_CHOICE" = "4" ]; then
     echo -e "${YELLOW}⚠️  No openai-image skill folder found — skipping${NC}"
   fi
 
-  # Ask about API keys
-  echo ""
-  read -p "Do you also want to remove your API keys from .env? (y/n): " REMOVE_KEYS
-  echo ""
-  if [ "$REMOVE_KEYS" = "y" ]; then
-    read -p "Remove FAL_KEY? (y/n): " REMOVE_FAL_KEY
-    if [ "$REMOVE_FAL_KEY" = "y" ]; then
-      sed -i '/^FAL_KEY/d' "$HOME/.openclaw/.env"
-      echo -e "${GREEN}✅ FAL_KEY removed${NC}"
-    fi
+  # Ask about API keys — only for keys that are actually present
+  HAS_FAL_KEY=false
+  HAS_OPENAI_KEY=false
+  grep -q "^FAL_KEY" "$HOME/.openclaw/.env" 2>/dev/null && HAS_FAL_KEY=true
+  grep -q "^OPENAI_API_KEY" "$HOME/.openclaw/.env" 2>/dev/null && HAS_OPENAI_KEY=true
 
-    read -p "Remove OPENAI_API_KEY? (y/n): " REMOVE_OPENAI_KEY
-    if [ "$REMOVE_OPENAI_KEY" = "y" ]; then
-      sed -i '/^OPENAI_API_KEY/d' "$HOME/.openclaw/.env"
-      echo -e "${GREEN}✅ OPENAI_API_KEY removed${NC}"
+  if [ "$HAS_FAL_KEY" = true ] || [ "$HAS_OPENAI_KEY" = true ]; then
+    echo ""
+    read -p "Do you also want to remove your API keys from .env? (y/n): " REMOVE_KEYS
+    echo ""
+    if [ "$REMOVE_KEYS" = "y" ]; then
+      if [ "$HAS_FAL_KEY" = true ]; then
+        read -p "Remove FAL_KEY? (y/n): " REMOVE_FAL_KEY
+        if [ "$REMOVE_FAL_KEY" = "y" ]; then
+          sed -i '/^FAL_KEY/d' "$HOME/.openclaw/.env"
+          echo -e "${GREEN}✅ FAL_KEY removed${NC}"
+        fi
+      fi
+      if [ "$HAS_OPENAI_KEY" = true ]; then
+        read -p "Remove OPENAI_API_KEY? (y/n): " REMOVE_OPENAI_KEY
+        if [ "$REMOVE_OPENAI_KEY" = "y" ]; then
+          sed -i '/^OPENAI_API_KEY/d' "$HOME/.openclaw/.env"
+          echo -e "${GREEN}✅ OPENAI_API_KEY removed${NC}"
+        fi
+      fi
     fi
   fi
 
